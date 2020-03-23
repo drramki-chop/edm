@@ -1,0 +1,20 @@
+Package: EDM
+Type: Package
+Title: Scalable workflow to identify copy Number variants from exome
+        sequencing data
+Version: 0.0.1
+Date: 2019-11-01
+Depends: R (>= 3.5.0), clustermq, ExomeDepth, yaml, purrr, data.table,
+        dplyr, magrittr, ggplot2, GenomicRanges
+Imports: clustermq, ExomeDepth, yaml, purrr, data.table, dplyr,
+        magrittr, GenomicRanges
+Suggests: knitr
+VignetteBuilder: knitr
+Author: Ramakrishnan Rajagopalan, Shiva Ganesan
+Maintainer: Ramakrishnan Rajagopalan  <rajagopalanr@email.chop.edu>
+Description: Provides optimized and scalable functions to call copy number variants (CNVs) from exome sequencing data.
+License: GPL-3
+NeedsCompilation: no
+Packaged: 2020-03-17 19:36:37 UTC; rajagopalanr
+Date/Publication: 2019-11-15 09:00:00
+RoxygenNote: 6.1.1

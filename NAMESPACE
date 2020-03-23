@@ -1,0 +1,8 @@
+exportPattern("^[[:alpha:]]+")
+import(ExomeDepth)
+import(clustermq)
+importFrom(dplyr,filter)
+importFrom(magrittr,"%>%")
+importFrom(yaml,read_yaml)
+importFrom(data.table,fread)
+importFrom(purrr,map_dfc)
