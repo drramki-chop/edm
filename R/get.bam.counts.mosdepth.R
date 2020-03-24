@@ -3,11 +3,10 @@
 get.bam.counts.mosdepth <- function(task_id,input){
 # pkgPath <- find.package("ExomeDepthMod")
   input.yaml <- yaml::read_yaml(input)
-  manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$manifest), header = T, sep ="\t", stringsAsFactors = F)
+ # manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$manifest), header = T, sep ="\t", stringsAsFactors = F)
+   manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),header=T, sep = "\t",stringsAsFactors=F)
   names(manifest) <- c("bam","sampleID","sex")
   
-  exon_path <- paste0(input.yaml$output.directory,"/results/bed_file.bed")
-
   # options(
   #  clustermq.scheduler = paste0(input.yaml$scheduler),
   #  clustermq.template = paste0(find.package("EDM"),"/template/",input.yaml$scheduler,"_template"),
@@ -22,7 +21,15 @@ get.bam.counts.mosdepth <- function(task_id,input){
   # manifest <- read.table(as.character(input.yaml$manifest),header=T,sep="\t")
   sampleID <- task_id;
   sample_name <- gsub(" ","_", manifest[sampleID,2])
+  if( tools::file_ext(manifest$bam[sampleID]) == "bam"){
+  exon_path <- paste0(input.yaml$output.directory,"/results/bed_file.bed")
   cmd = paste0("mosdepth --by ",exon_path," --mapq 20 --no-per-base --fast-mode ",input.yaml$output.directory,"/coverage/",sample_name," ",as.character(manifest[sampleID,1]));
   res <- system(cmd,intern=T)
   return(NULL)
+} else {
+  exon_path <- paste0(input.yaml$output.directory,"/results/chr_bed_file.bed")
+  cmd = paste0("mosdepth --by ",exon_path," --fasta ",input.yaml$fasta," --mapq 20 --no-per-base --fast-mode ",input.yaml$output.directory,"/coverage/",sample_name," ",as.character(manifest[sampleID,1]));
+  res <- system(cmd,intern=T)
+  return(NULL)
+}
 }

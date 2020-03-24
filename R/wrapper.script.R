@@ -52,15 +52,18 @@ wrapper.script <- function(input){
   
   ## check for index files
   message('Checking the index files for bams...\n');
-  manifest$bai <- NA;
-  manifest$bai[which(file.exists(paste0(as.character(manifest$bam),".bai")))] <- paste0(as.character(manifest$bam[which(file.exists(paste0(as.character(manifest$bam),".bai")))]),".bai")
-  manifest$bai[which(file.exists(paste0(gsub(pattern = "bam","bai",manifest$bam))))] <- paste0(gsub(pattern = "bam","bai",manifest$bam[which(file.exists(paste0(gsub(pattern = "bam","bai",manifest$bam))))]))
-  message(paste0('Samples with missing index files are written to results/missing.index.samples.txt \n sample_names:')) 
-  message(paste0(manifest$sampleID[is.na(manifest$bai)],'\n'));
-  write.table( paste0('Index file not found for ',manifest[is.na(manifest$bai),]),paste0(input.yaml$output.directory,"/results/missing.index.samples.txt"),row.names=F,quote=F, sep ="\t") 
-  manifest <- manifest[!is.na(manifest$bai),]
-  write.table(manifest[,1:3],paste0(input.yaml$output.directory,"/results/",input.yaml$manifest),row.names =F,quote =F, sep ="\t")
+  manifest$index <- NA;
+  manifest$index[which(file.exists(paste0(as.character(manifest$bam),".bai")))] <- paste0(as.character(manifest$bam[which(file.exists(paste0(as.character(manifest$bam),".bai")))]),".bai")
+  manifest$index[which(file.exists(paste0(gsub(pattern = "bam","bai",manifest$bam))))] <- paste0(gsub(pattern = "bam","bai",manifest$bam[which(file.exists(paste0(gsub(pattern = "bam","bai",manifest$bam))))]))
+  manifest$index[which(file.exists(paste0(as.character(manifest$bam),".crai")))] <- paste0(as.character(manifest$bam[which(file.exists(paste0(as.character(manifest$bam),".crai")))]),".crai")
+  manifest$index[which(file.exists(paste0(gsub(pattern = "cram","crai",manifest$bam))))] <- paste0(gsub(pattern = "cram","crai",manifest$bam[which(file.exists(paste0(gsub(pattern = "cram","crai",manifest$bam))))]))
 
+  message(paste0('Samples with missing index files are written to results/missing.index.samples.txt \n sample_names:')) 
+  message(paste0(manifest$sampleID[is.na(manifest$index)],'\n'));
+  write.table( paste0('Index file not found for ',manifest[is.na(manifest$index),]),paste0(input.yaml$output.directory,"/results/missing.index.samples.txt"),row.names=F,quote=F, sep ="\t") 
+  manifest <- manifest[!is.na(manifest$index),]
+  # write.table(manifest[,1:3],paste0(input.yaml$output.directory,"/results/",input.yaml$manifest),row.names =F,quote =F, sep ="\t")
+  write.table(manifest[,1:3],paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),row.names =F,quote =F, sep ="\t")
   # for (i in 1:length(manifest$bam)){
   #  if(file.exists(gsub(pattern = "bam","bai",manifest$bam[i]))){
   #    manifest$bai[i] <- gsub(pattern = "bam","bai",manifest$bam[i])
