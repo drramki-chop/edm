@@ -131,6 +131,8 @@ wrapper.script <- function(input){
   
   ## call variants
   message('Calling variants...   \n')
+  manifest <-  read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),header=T, stringsAsFactors=F,sep ="\t")
+   nSamples = NROW(manifest)
   clustermq::Q(call.variants,pkgs=list("EDM","ExomeDepth"),columnIndex=1:nSamples,n_jobs=nSamples,input=input, max_calls_worker = 1,template=list(job_name="call_variants",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input))
   
   ## move log files
