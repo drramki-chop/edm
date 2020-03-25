@@ -167,14 +167,14 @@ call.variants <- function(columnIndex,input){
     all_exons <- list(auto_calls = all_exons_auto, x_calls = all_exons_x)
     write.table(calls_all, paste0(input.yaml$output.directory, 
                                   "/results/individual.edm.calls/", sample_name, ".edm.calls.txt"), 
-                row.names = F, quote = F, sep = "\t")
+                row.names = F, sep = "\t")
     saveRDS(all_exons, paste0(input.yaml$output.directory, 
                               "/results/individual.ed.objects/", sample_name, ".ed.object.rds"))
     cor.data <- data.frame(cor = cor(all_exons$auto_calls@test, 
                                      all_exons$auto_calls@reference), sample_name = sample_name)
     write.table(cor.data, paste0(input.yaml$output.directory, 
                                  "/results/individual.edm.calls/", sample_name, ".edm.cor.txt"), 
-                row.names = F, quote = F, sep = "\t")
+                row.names = F,sep = "\t")
     return(all_exons)
   } else {
     if (dim(all_exons_auto@CNV.calls)[1] > 0) {
@@ -185,14 +185,14 @@ call.variants <- function(columnIndex,input){
       all_exons <- list(auto_calls = all_exons_auto)
       write.table(calls_all, paste0(input.yaml$output.directory, 
                                     "/results/individual.edm.calls/", sample_name, ".edm.calls.txt"), 
-                  row.names = F, quote = F, sep = "\t")
+                  row.names = F, sep = "\t")
       saveRDS(all_exons, paste0(input.yaml$output.directory, 
                                 "/results/individual.ed.objects/", sample_name, ".ed.object.rds"))
       cor.data <- data.frame(cor = cor(all_exons$auto_calls@test, 
                                        all_exons$auto_calls@reference), sample_name = sample_name)
       write.table(cor.data, paste0(input.yaml$output.directory, 
                                    "/results/individual.edm.calls/", sample_name, ".edm.cor.txt"), 
-                  row.names = F, quote = F, sep = "\t")
+                  row.names = F, sep = "\t")
       return(all_exons)
     } else {
       return(NULL)
