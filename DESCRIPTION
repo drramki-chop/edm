@@ -7,7 +7,7 @@ Date: 2020-03-26
 Depends: R (>= 3.5.0), clustermq, ExomeDepth, yaml, purrr, data.table,
         dplyr, magrittr, ggplot2, GenomicRanges
 Imports: clustermq, ExomeDepth, yaml, purrr, data.table, dplyr,
-        magrittr, GenomicRanges
+        magrittr, GenomicRanges, RcppAlgos
 Suggests: knitr
 VignetteBuilder: knitr
 Author: Ramakrishnan Rajagopalan, Shiva Ganesan
