@@ -22,7 +22,6 @@
 
 
 suppressMessages(library(optparse))
-suppressMessages(library(ExomeDepth))
 suppressMessages(library(EDM))
 
 options(stringsAsFactors=FALSE) # crucial for handling BAM filenames as strings
