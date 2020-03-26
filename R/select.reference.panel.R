@@ -16,6 +16,13 @@ select.reference.panel <- function(test.counts, reference.counts, bin.length = N
   reference.counts <- reference.counts[, order(correlations, decreasing = TRUE), drop = FALSE]
   csum <- t(apply(reference.counts[,1:50],1,cumsum)) +1
   ratio <- apply(csum,2,function(x){return(mean(test.counts/x,na.rm=T))})
+  if( length(which(ratio <0.05)) > 0) {
   my.res <- list(reference.choice = names(ratio)[1:min(which(ratio < 0.05))])
   return(my.res)
+  } else {
+  message('It looks like the test sample is an outlier and CNV cannot be called.')
+  my.res <- list(reference.choice = dimnames(reference.counts)[[2]][1], summary.stats = NULL)
+    return(my.res)
+  }
+  
 }

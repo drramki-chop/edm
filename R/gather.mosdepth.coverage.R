@@ -6,7 +6,8 @@
 gather.mosdepth.coverage <- function(task_id,input){
   input.yaml <- yaml::read_yaml(input)
   
-  manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$manifest), header = T, sep ="\t", stringsAsFactors = F)
+ # manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$manifest), header = T, sep ="\t", stringsAsFactors = F)
+  manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),header=T, sep = "\t",stringsAsFactors=F)
   names(manifest) <- c("bam","sampleID","sex")
   
   # options(
@@ -41,7 +42,7 @@ gather.mosdepth.coverage <- function(task_id,input){
     message(paste0("Wrote failed samples to the file ",cohort.name,".samples.failed.coverage.2.txt. Proceeding with the rest of the samples"))
     manifest <- manifest %>% filter( sampleID %in% snames)
     }
-    write.table(manifest ,paste0(input.yaml$output.directory,"/results/",input.yaml$manifest),row.names =F,quote =F, sep ="\t")
+    write.table(manifest ,paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),row.names =F,quote =F, sep ="\t")
    
     if(length(countFiles) > 0){
     firstSample <- as.data.frame(data.table::fread(countFiles[1]))
@@ -75,6 +76,8 @@ gather.mosdepth.coverage <- function(task_id,input){
         men <- manifest$sampleID[manifest$sex == "M" | manifest$sex == "1"]
         women <- manifest$sampleID[manifest$sex == "F" |manifest$sex == "2"]
         
+        ## cleanup CountData
+        countData[[2]]$chromosome <- gsub("chr","",countData[[2]]$chromosome)
         ## autosome
         countmat.auto <- countmat[which(countData[[2]]$chromosome %in% c(1:22)),]
         annotations.auto <- annotations[which(countData[[2]]$chromosome %in% c(1:22)),]
