@@ -75,19 +75,25 @@ reference_list <- EDM::select.reference.panel(test.counts = cohort.object.auto[[
                                                 reference.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],-columnIndex],
                                                 correlations = cohort.object.auto[["correlations"]][-columnIndex,columnIndex])
 if(is.null(reference_list$reference.choice) == F){
-    reference_set = apply(
-                        X = as.matrix(cohort.object.auto[["countmat"]][, reference_list$reference.choice]),
-                        MAR=1, FUN=sum)
+	
+    #reference_set = apply(
+    #                    X = as.matrix(cohort.object.auto[["countmat"]][, reference_list$reference.choice]),
+    #                    MAR=1, FUN=sum)
+	
+    reference_set = rowSums(as.matrix(cohort.object.auto[["countmat"]][, reference_list$reference.choice]))
     all_exons_auto = new('ExomeDepth', test=cohort.object.auto[["countmat"]][,columnIndex],
                          reference=reference_set,
                          formula = 'cbind(test,reference) ~ 1')
     all_exons_auto = ExomeDepth::CallCNVs(x = all_exons_auto, transition.probability=1e-4,
                                           chromosome= cohort.object.auto[["annotations"]]$chromosome, start=cohort.object.auto[["annotations"]]$start,
                                           end=cohort.object.auto[["annotations"]]$end, name=cohort.object.auto[["annotations"]]$name)
-    all_exons_auto@CNV.calls$sample <- opt$`sample-id`
-    saveRDS(all_exons_auto,paste0(opt$`sample-id`,".auto.edObject.rds"));
-#    write.table(all_exons_auto@CNV.calls,paste0(opt$`sample-id`,".edm.calls.txt"),sep="\t",row.names=F)
-    CNV.calls <- all_exons_auto@CNV.calls
+    if(dim(all_exons_auto@CNV.calls)[1] > 0){
+        all_exons_auto@CNV.calls$sample <- opt$`sample-id`
+        saveRDS(all_exons_auto,paste0(opt$`sample-id`,".auto.edObject.rds"));
+        CNV.calls <- all_exons_auto@CNV.calls
+    } else {
+	message("Warning: Did not find any CNV in autosomes.")
+	flush.console()
 }
 
 ############### Sex chromosome #####################3
@@ -114,9 +120,18 @@ if(is.null(reference_list$reference.choice) == F){
     all_exons_x = ExomeDepth::CallCNVs(x = all_exons_x, transition.probability=1e-4,
                                           chromosome= cohort.object.x[["annotations"]]$chromosome, start=cohort.object.x[["annotations"]]$start,
                                           end=cohort.object.x[["annotations"]]$end, name=cohort.object.x[["annotations"]]$name)
-    all_exons_x@CNV.calls$sample <- opt$`sample-id`
-    saveRDS(all_exons_x,paste0(opt$`sample-id`,".sex.edObject.rds"));
-    CNV.calls <- rbind(CNV.calls,all_exons_x@CNV.calls)
+    if(dim(all_exons_x@CNV.calls)[1] > 0{
+	all_exons_x@CNV.calls$sample <- opt$`sample-id`
+    	saveRDS(all_exons_x,paste0(opt$`sample-id`,".sex.edObject.rds"));
+    	CNV.calls <- rbind(CNV.calls,all_exons_x@CNV.calls)
+    }else{
+	    message("Did not find any CNVs in ChrX");
+	    flush.console();
+    }
 }
-saveRDS(all_exons_auto,paste0(opt$`sample-id`,".auto.edObject.rds"));
-write.table(CNV.calls,paste0(opt$`sample-id`,".edm.calls.txt"),sep="\t",row.names=F,quote=F)
+
+if(dim(CNV.calls)[1] > 0){
+    write.table(CNV.calls,paste0(opt$`sample-id`,".edm.calls.txt"),sep="\t",row.names=F,quote=F)
+} else {
+    message("Warning: Didn't find any CNV in this sample.")
+}
