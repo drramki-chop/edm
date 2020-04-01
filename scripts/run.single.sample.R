@@ -93,7 +93,8 @@ if(is.null(reference_list$reference.choice) == F){
         CNV.calls <- all_exons_auto@CNV.calls
     } else {
 	message("Warning: Did not find any CNV in autosomes.")
-	flush.console()
+	flush.console();
+    }
 }
 
 ############### Sex chromosome #####################3
