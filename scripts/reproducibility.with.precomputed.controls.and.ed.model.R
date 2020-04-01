@@ -50,26 +50,6 @@ countmat.selected <- countmat[cohort.object$selected.exons,]
 correlations <- cor(countmat)
 
 
-############# Defaults ##############################
-transition.probability = 1e-4
-expected.CNV.length = 50000
-transitions <- matrix(
-  nrow = 3,
-  ncol = 3,
-  c(
-    1. - transition.probability,
-    transition.probability / 2.,
-    transition.probability / 2.,
-    0.5,
-    0.5,
-    0.,
-    0.5,
-    0,
-    0.5
-  ),
-  byrow = TRUE
-)
-
 ############# Reproducibility ########################
 ## CNV calling code re-used from EoxmeDepth
 
@@ -84,10 +64,6 @@ for (iter in 1:iterations) {
   message(paste("iteration",iter))
   flush.console()
   rand.samples <- sort(sample(c(1:n.controls), n.random.controls))
-#  reference_list <- select.reference.samples(test.counts = countmat[,sample.index],
-#                                                          reference.count = countmat[,rand.samples],
-#                                                          bin.length=(countdf$end-countdf$start)/1000,
-#                                                          n.bins.reduced = 10000, subset.for.speed=10000)
  
   reference_list <-
     EDM::select.reference.panel(
