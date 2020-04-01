@@ -120,7 +120,7 @@ if(is.null(reference_list$reference.choice) == F){
     all_exons_x = ExomeDepth::CallCNVs(x = all_exons_x, transition.probability=1e-4,
                                           chromosome= cohort.object.x[["annotations"]]$chromosome, start=cohort.object.x[["annotations"]]$start,
                                           end=cohort.object.x[["annotations"]]$end, name=cohort.object.x[["annotations"]]$name)
-    if(dim(all_exons_x@CNV.calls)[1] > 0{
+    if(dim(all_exons_x@CNV.calls)[1] > 0){
 	all_exons_x@CNV.calls$sample <- opt$`sample-id`
     	saveRDS(all_exons_x,paste0(opt$`sample-id`,".sex.edObject.rds"));
     	CNV.calls <- rbind(CNV.calls,all_exons_x@CNV.calls)
