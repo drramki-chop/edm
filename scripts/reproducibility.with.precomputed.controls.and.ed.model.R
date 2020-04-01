@@ -1,8 +1,13 @@
-## reproducibility.w.precomputed.controls.R 
+## reproducibility.w.precomputed.controls.R
 
-## This function takes an exomedepth model (object) created by the EDM pipeline, control cohort, and number of required replications.
+## This function takes an exomedepth model (object), control cohort, and number of required replications.
 ## It bootstraps random combinations of controls and uses the estimated parameters (phi) from the original model
-## to call CNVs and  estimate the reproducibility.
+## to call CNVs to create an estimate of reproducibility.
+
+## Notes on this version
+## ---------------------
+
+## Uses an random controls
 
 suppressMessages(library(optparse))
 suppressMessages(library(EDM))
@@ -10,10 +15,10 @@ suppressMessages(library(EDM))
 options(stringsAsFactors=FALSE) # crucial for handling BAM filenames as strings
 
 option_list = list(
-  make_option(c("--exomedepth-object"), action="store", 
+  make_option(c("--exomedepth-object"), action="store",
               type='character', help="Single sample exomedpeth object"),
-  make_option(c("--control-cohort"), action="store", 
-              type='character', help="Control cohort created by EDM (.rds)"),  
+  make_option(c("--control-cohort"), action="store",
+              type='character', help="Control cohort created by EDM (.rds)"),
   make_option(c("--iterations"),action="store",default=1000,
               type='numeric',help="Number of iterations to run"),
   make_option(c("--n-random-controls",action="store",default=100),
@@ -81,7 +86,7 @@ for (iter in 1:iterations) {
       reference.counts = cohort.object[["countmat"]][cohort.object[["selected.exons"]], rand.samples],
       correlations = correlations[rand.samples, sample.index]
     )
-  
+
   reference_set = rowSums(countmat[, reference_list$reference.choice])
   expected = rep(mean(exomedepth.object@test/reference_set,na.rm=T),length(exomedepth.object@test))
   
@@ -93,7 +98,7 @@ for (iter in 1:iterations) {
     observed = as.integer(exomedepth.object@test),
     mixture = 1
   )
-  
+
   shift <- 0
   my.calls.final <- data.frame()
   for (chrom in 1:22) {
@@ -106,10 +111,10 @@ for (iter in 1:iterations) {
       exomedepth.object@reference[good.pos] + exomedepth.object@test[good.pos]
     positions <- loc.annotations$start
     end.positions <- loc.annotations$end
-    
+
     loc.likelihood <-
       rbind(c(-Inf, 0, -Inf), loglike[good.pos, c(2, 1, 3)], c(-100, 0,-100))
-    
+
     my.calls <-
       viterbi.hmm (
         transitions,
@@ -128,41 +133,41 @@ for (iter in 1:iterations) {
     my.calls$calls$end.p <- my.calls$calls$end.p -1  ##remove the dummy exon, which has now served its purpose
     #loc.likelihood <- loc.likelihood[ -1, c(2,1, 3) ]  ##remove the dummy exon, which has now served its purpose
     loc.likelihood <- loc.likelihood[ -c(1,nrow(loc.likelihood)), c(2,1, 3), drop = FALSE ] ##remove both of the dummy exons, which have now served their purpose
-    
+
     ################################ Now make it look better, add relevant info
     if (nrow(my.calls$calls) > 0) {
-      
+
       my.calls$calls$start <- loc.annotations$start[ my.calls$calls$start.p ]
       my.calls$calls$end <- loc.annotations$end[ my.calls$calls$end.p ]
       my.calls$calls$chromosome <- as.character(loc.annotations$chromosome[ my.calls$calls$start.p ])
-      
+
       my.calls$calls$id <- paste('chr', my.calls$calls$chromosome, ':',  my.calls$calls$start, '-',  my.calls$calls$end, sep = '')
       my.calls$calls$type <- c('deletion', 'duplication')[ my.calls$calls$type ]
-      
+
       ########## make things pretty
       my.calls$calls$BF <- NA
       my.calls$calls$reads.expected <- NA
       my.calls$calls$reads.observed <- NA
-      
-      
+
+
       for (ir in 1:nrow(my.calls$calls)) {
-        
+
         if (my.calls$calls$type[ir] == 'duplication') my.calls$calls$BF[ir] <-  sum(loc.likelihood [ my.calls$calls$start.p[ir] : my.calls$calls$end.p[ir],3 ] - loc.likelihood [ my.calls$calls$start.p[ir] : my.calls$calls$end.p[ir],2 ])
-        
+
         if (my.calls$calls$type[ir] == 'deletion') my.calls$calls$BF[ir] <-  sum(loc.likelihood [ my.calls$calls$start.p[ir] : my.calls$calls$end.p[ir], 1 ] - loc.likelihood [ my.calls$calls$start.p[ir] : my.calls$calls$end.p[ir],2  ])
-        
+
         my.calls$calls$reads.expected[ ir ] <-  sum( loc.total [my.calls$calls$start.p[ir] : my.calls$calls$end.p[ir] ] * loc.expected [my.calls$calls$start.p[ir] : my.calls$calls$end.p[ ir ] ])
         my.calls$calls$reads.observed[ ir ] <-  sum( loc.test [my.calls$calls$start.p[ir] : my.calls$calls$end.p[ir] ] )
       }
-      
+
       my.calls$calls$reads.expected <- as.integer( my.calls$calls$reads.expected)
       my.calls$calls$reads.ratio <-  signif(my.calls$calls$reads.observed / my.calls$calls$reads.expected, 3)
       my.calls$calls$BF <- signif( log10(exp(1))*my.calls$calls$BF, 3)
-      
+
       #### shift the numbering properly
       my.calls$calls$start.p <- my.calls$calls$start.p + shift
       my.calls$calls$end.p <- my.calls$calls$end.p + shift
-      
+
       if (nrow(my.calls.final) == 0) {my.calls.final <- my.calls$calls} else {my.calls.final <- rbind.data.frame(my.calls.final, my.calls$calls)}
       #message('Number of calls for chromosome ', chrom, ' : ', nrow(my.calls$calls))
     }
