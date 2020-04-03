@@ -35,8 +35,8 @@ call.variants <- function(columnIndex,input){
     cohort.object.auto$correlations <- cor(countmat.selected)
     reference_list <- EDM::select.reference.panel(test.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]], 
                                                                                                  columnIndex_n], reference.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]], 
-                                                                                                                                                                   -columnIndex_n], correlations = cohort.object.auto[["correlations"]][-columnIndex_n, 
-                                                                                                                                                                                                                                      columnIndex_n])
+                                                                                                                                                                     -columnIndex_n], correlations = cohort.object.auto[["correlations"]][-columnIndex_n, 
+                                                                                                                                                                                                                                          columnIndex_n])
   } else {
     cohort.object.auto <- readRDS(paste0(input.yaml$output.directory, 
                                          "/results/", input.yaml$cohort.name, ".exomedepth.cohort.auto.rds"))
@@ -46,7 +46,7 @@ call.variants <- function(columnIndex,input){
                                                                                                                                                                      -columnIndex_n], correlations = cohort.object.auto[["correlations"]][-columnIndex_n, 
                                                                                                                                                                                                                                           columnIndex_n])
   }
- 
+  
   ## variant calling autosomes 
   if (is.null(reference_list$reference.choice) == F) {
     reference_set = apply(X = as.matrix(cohort.object.auto[["countmat"]][, 
@@ -71,7 +71,7 @@ call.variants <- function(columnIndex,input){
       batch <- readRDS(paste0(input.yaml$output.directory, 
                               "/results/", input.yaml$cohort.name, ".exomedepth.cohort.men.rds"))
       columnIndex_x <- which(colnames(batch$countmat) %in% 
-                             sample_name)
+                               sample_name)
       cohort.object.x$countmat <- cbind(cohort.object.x$countmat, 
                                         batch$countmat[, columnIndex_x, drop = FALSE])
       columnIndex_x = nControls + 1
@@ -91,8 +91,7 @@ call.variants <- function(columnIndex,input){
       columnIndex_x <- which(colnames(cohort.object.x[[1]]) %in% sample_name)
       reference_list <- EDM::select.reference.panel(test.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]], 
                                                                                                 columnIndex_x], reference.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]], 
-                                                                                                                                                                 -columnIndex_x], correlations = cohort.object.x[["correlations"]][-columnIndex_x, 
-                                                                                                                                                                                                                                   columnIndex_x])
+                                                                                                                                                                 -columnIndex_x], correlations = cohort.object.x[["correlations"]][-columnIndex_x,columnIndex_x])
     }
     ## Call variants men
     if (is.null(reference_list$reference.choice) == F) {
@@ -117,7 +116,7 @@ call.variants <- function(columnIndex,input){
       batch <- readRDS(paste0(input.yaml$output.directory, 
                               "/results/", input.yaml$cohort.name, ".exomedepth.cohort.women.rds"))
       columnIndex_x <- which(colnames(batch$countmat) %in% 
-                             sample_name)
+                               sample_name)
       cohort.object.x$countmat <- cbind(cohort.object.x$countmat, 
                                         batch$countmat[, columnIndex_x, drop = FALSE])
       columnIndex_x = nControls + 1
@@ -137,7 +136,7 @@ call.variants <- function(columnIndex,input){
       reference_list <- EDM::select.reference.panel(test.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]], 
                                                                                                 columnIndex_x], reference.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]], 
                                                                                                                                                                  -columnIndex_x], correlations = cohort.object.x[["correlations"]][-columnIndex_x, 
-                                                                                                                                                                                                                                 columnIndex_x])
+                                                                                                                                                                                                                                   columnIndex_x])
     }
     
     ## Call variants women
@@ -157,14 +156,118 @@ call.variants <- function(columnIndex,input){
     }
   }
   
-  if (dim(all_exons_x@CNV.calls)[1] > 0 & dim(all_exons_auto@CNV.calls)[1] > 
-      0) {
+  if (dim(all_exons_x@CNV.calls)[1] > 0 & dim(all_exons_auto@CNV.calls)[1] >  0) {
     all_exons_auto@CNV.calls$sample <- sample_name
     all_exons_x@CNV.calls$sample <- sample_name
-    calls <- rbind(all_exons_auto@CNV.calls, all_exons_x@CNV.calls)
-    annotated <- EDM::variant.annotations(calls)
-    calls_all <- cbind(calls, annotated[, 4:dim(annotated)[2]])
     all_exons <- list(auto_calls = all_exons_auto, x_calls = all_exons_x)
+    calls.first <- rbind(all_exons_auto@CNV.calls, all_exons_x@CNV.calls)
+    
+    if(input.yaml$reproducibility == T){
+      calls.first$reproducibility <- 0
+      sample.del <- calls.first[calls.first$type %in% c("deletion"),]
+      sample.dup <- calls.first[calls.first$type %in% c("duplication"),]
+      sample.del.gr <- GenomicRanges::GRanges(sample.del$id)
+      sample.dup.gr <- GenomicRanges::GRanges(sample.dup$id)
+      
+      if(is.null(input.yaml$iterations )== F) {
+        iterations = as.numeric(input.yaml$iterations) 
+      } else {
+        iterations <- 1000
+      }
+      
+      for (iter in 1:iterations) {
+        # message(paste("iteration",iter))
+        # flush.console()
+        n.random.controls <- 100
+        
+        ## autosomes reproducible
+        if (input.yaml$precomputed.controls) {
+          rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+          
+          ##auto
+          reference_list_auto <- EDM::select.reference.panel(test.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],columnIndex_n],
+                                                        reference.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],rand.samples], 
+                                                        correlations = cohort.object.auto[["correlations"]][rand.samples, columnIndex_n])
+          
+          ## chrX
+          nControls <- dim(cohort.object.x[["countmat"]])[2]
+          rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+          reference_list_x <- EDM::select.reference.panel(test.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]],columnIndex_x],
+                                                        reference.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]],rand.samples], 
+                                                        correlations = cohort.object.x[["correlations"]][rand.samples, columnIndex_x])
+          
+        } else {
+          ## auto
+          nControls <- dim(cohort.object.auto[["countmat"]])[2]
+          rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+          while(columnIndex_x  %in% rand.samples == T) { 
+            rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+          }
+          reference_list_auto <- EDM::select.reference.panel(test.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],columnIndex_n],
+                                                        reference.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],rand.samples], 
+                                                        correlations = cohort.object.auto[["correlations"]][rand.samples,columnIndex_n])
+          
+          ## chrX
+          nControls <- dim(cohort.object.x[["countmat"]])[2]
+          rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+          while(columnIndex_x  %in% rand.samples == T) { 
+            rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+          }
+          reference_list_x <- EDM::select.reference.panel(test.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]],columnIndex_x], 
+                                                        reference.counts = cohort.object.x[["countmat"]][cohort.object.x[["selected.exons"]],-columnIndex_x], 
+                                                        correlations = cohort.object.x[["correlations"]][-columnIndex_x,columnIndex_x])
+        }
+
+        ## variant calling autosomes 
+        if (is.null(reference_list_auto$reference.choice) == F) {
+          reference_set_auto = rowSums(cohort.object.auto[["countmat"]][,reference_list_auto$reference.choice])
+      
+          all_exons_auto = new('ExomeDepth',test=cohort.object.auto[["countmat"]][,columnIndex_n],
+                               reference=reference_set_auto,
+                               formula = 'cbind(test,reference) ~ 1', subset.for.speed = 10000)
+          
+          all_exons_auto = ExomeDepth::CallCNVs(x = all_exons_auto, 
+                                                transition.probability = as.numeric(input.yaml$transition.probability), 
+                                                chromosome = cohort.object.auto[["annotations"]]$chromosome, 
+                                                start = cohort.object.auto[["annotations"]]$start, 
+                                                end = cohort.object.auto[["annotations"]]$end, name = cohort.object.auto[["annotations"]]$name)
+        } else {
+          message(paste0("\n *********** Sample ", sample_name, 
+                         " failed for Autosome variant calling. ************* \n"))
+        }        
+        
+        if (is.null(reference_list_x$reference.choice) == F) {
+          reference_set_x = rowSums(cohort.object.x[["countmat"]][,reference_list_x$reference.choice])
+          
+          all_exons_x = new('ExomeDepth',test = cohort.object.x[["countmat"]][,columnIndex_x],
+                            reference=reference_set_x,
+                            formula = 'cbind(test,reference) ~ 1')
+          
+          all_exons_x = ExomeDepth::CallCNVs(x = all_exons_x, 
+                                             transition.probability = as.numeric(input.yaml$transition.probability), 
+                                             chromosome = cohort.object.x[["annotations"]]$chromosome, 
+                                             start = cohort.object.x[["annotations"]]$start, 
+                                             end = cohort.object.x[["annotations"]]$end, name = cohort.object.x[["annotations"]]$name)
+        } else {
+          message(paste0("\n *********** Sample ", sample_name, 
+                         " failed for chr X variant calling. ************* \n"))
+        }
+        
+        all_exons_auto@CNV.calls$sample <- sample_name
+        all_exons_x@CNV.calls$sample <- sample_name
+        my.calls.final <- rbind(all_exons_auto@CNV.calls, all_exons_x@CNV.calls)
+        
+        #write.table(my.calls.final,paste0(sample.name,".iter.",iter,".txt"), row.names=F,quote=F,sep="\t")
+        my.calls.final.del.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("deletion"),]$id)
+        my.calls.final.dup.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("duplication"),]$id)
+        sample.del$reproducibility <- sample.del$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.del.gr,my.calls.final.del.gr) > 0)
+        sample.dup$reproducibility <- sample.dup$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.dup.gr,my.calls.final.dup.gr) > 0)
+      }
+      sample.cnv.calls <- rbind(sample.del,sample.dup) 
+    }
+    
+    annotated <- EDM::variant.annotations(sample.cnv.calls)
+    calls_all <- cbind(sample.cnv.calls, annotated[, 4:dim(annotated)[2]])
     write.table(calls_all, paste0(input.yaml$output.directory, 
                                   "/results/individual.edm.calls/", sample_name, ".edm.calls.txt"), 
                 row.names = F, sep = "\t")
@@ -179,10 +282,82 @@ call.variants <- function(columnIndex,input){
   } else {
     if (dim(all_exons_auto@CNV.calls)[1] > 0) {
       all_exons_auto@CNV.calls$sample <- sample_name
-      calls <- rbind(all_exons_auto@CNV.calls)
+      calls.first <- rbind(all_exons_auto@CNV.calls)
+      all_exons <- list(auto_calls = all_exons_auto)
+      
+      if(input.yaml$reproducibility == T){
+        calls.first$reproducibility <- 0
+        sample.del <- calls.first[calls.first$type %in% c("deletion"),]
+        sample.dup <- calls.first[calls.first$type %in% c("duplication"),]
+        sample.del.gr <- GenomicRanges::GRanges(sample.del$id)
+        sample.dup.gr <- GenomicRanges::GRanges(sample.dup$id)
+        
+        if(is.null(input.yaml$iterations )== F) {
+          iterations = as.numeric(input.yaml$iterations) 
+        } else {
+          iterations <- 1000
+        }
+        
+        for (iter in 1:iterations) {
+          # message(paste("iteration",iter))
+          # flush.console()
+          n.random.controls <- 100
+          
+          ## autosomes reproducible
+          if (input.yaml$precomputed.controls) {
+            rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+            
+            ##auto
+            reference_list_auto <- EDM::select.reference.panel(test.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],columnIndex_n],
+                                                               reference.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],rand.samples], 
+                                                               correlations = cohort.object.auto[["correlations"]][rand.samples, columnIndex_n])
+            
+          } else {
+            ## auto
+            nControls <- dim(cohort.object.auto[["countmat"]])[2]
+            rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+            while(columnIndex_x  %in% rand.samples == T) { 
+              rand.samples <- sort(sample(c(1:nControls),n.random.controls ))
+            }
+            reference_list_auto <- EDM::select.reference.panel(test.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],columnIndex_n],
+                                                               reference.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]],rand.samples], 
+                                                               correlations = cohort.object.auto[["correlations"]][rand.samples,columnIndex_n])
+            
+          }
+          
+          ## variant calling autosomes 
+          if (is.null(reference_list_auto$reference.choice) == F) {
+            reference_set_auto = rowSums(cohort.object.auto[["countmat"]][,reference_list_auto$reference.choice])
+            
+            all_exons_auto = new('ExomeDepth',test=cohort.object.auto[["countmat"]][,columnIndex_n],
+                                 reference=reference_set_auto,
+                                 formula = 'cbind(test,reference) ~ 1', subset.for.speed = 10000)
+            
+            all_exons_auto = ExomeDepth::CallCNVs(x = all_exons_auto, 
+                                                  transition.probability = as.numeric(input.yaml$transition.probability), 
+                                                  chromosome = cohort.object.auto[["annotations"]]$chromosome, 
+                                                  start = cohort.object.auto[["annotations"]]$start, 
+                                                  end = cohort.object.auto[["annotations"]]$end, name = cohort.object.auto[["annotations"]]$name)
+          } else {
+            message(paste0("\n *********** Sample ", sample_name, 
+                           " failed for Autosome variant calling. ************* \n"))
+          }        
+          
+          all_exons_auto@CNV.calls$sample <- sample_name
+          my.calls.final <- all_exons_auto@CNV.calls
+          
+          #write.table(my.calls.final,paste0(sample.name,".iter.",iter,".txt"), row.names=F,quote=F,sep="\t")
+          my.calls.final.del.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("deletion"),]$id)
+          my.calls.final.dup.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("duplication"),]$id)
+          sample.del$reproducibility <- sample.del$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.del.gr,my.calls.final.del.gr) > 0)
+          sample.dup$reproducibility <- sample.dup$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.dup.gr,my.calls.final.dup.gr) > 0)
+        }
+        sample.cnv.calls <- rbind(sample.del,sample.dup) 
+      }
+      
       annotated <- EDM::variant.annotations(calls)
       calls_all <- cbind(calls, annotated[, 4:dim(annotated)[2]])
-      all_exons <- list(auto_calls = all_exons_auto)
+      
       write.table(calls_all, paste0(input.yaml$output.directory, 
                                     "/results/individual.edm.calls/", sample_name, ".edm.calls.txt"), 
                   row.names = F, sep = "\t")
