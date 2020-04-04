@@ -116,7 +116,7 @@ wrapper.script <- function(input){
   #  source("clustermq_getCounts.R")
   nSamples = NROW(manifest)
   message(' Count step...   \n')
-  clustermq::Q(get.bam.counts.mosdepth,pkgs="EDM",task_id=1:nSamples,input = input,n_jobs=nSamples, max_calls_worker = 1, template=list(job_name="compute_coverage", env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")),export = list(input = input))
+  clustermq::Q(get.bam.counts.mosdepth,pkgs="EDM",task_id=1:nSamples,input = input,n_jobs=nSamples, max_calls_worker = 1, template=list(job_name="compute_coverage", env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")),export = list(input = input),timeout = 72000)
   
   ## move log files
   system(paste0("mv compute_coverage* ",input.yaml$output.directory,"/logs/."))
@@ -133,7 +133,8 @@ wrapper.script <- function(input){
   message('Calling variants...   \n')
   manifest <-  read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),header=T, stringsAsFactors=F,sep ="\t")
    nSamples = NROW(manifest)
-  clustermq::Q(call.variants,pkgs=list("EDM","ExomeDepth"),columnIndex=1:nSamples,n_jobs=nSamples,input=input, max_calls_worker = 1,template=list(job_name="call_variants",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input))
+   call.variants <- suppressWarnings(call.variants)
+  clustermq::Q(call.variants,pkgs=list("EDM","ExomeDepth"),columnIndex=1:nSamples,n_jobs=nSamples,input=input, max_calls_worker = 1,template=list(job_name="call_variants",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input),timeout = 1440000)
   
   ## move log files
   system(paste0("mv call_variants* ",input.yaml$output.directory,"/logs/."))
