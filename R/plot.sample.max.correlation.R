@@ -11,10 +11,12 @@
 
 plot.sample.max.correlation <- function(input){
   input.yaml <- yaml::read_yaml(input) 
-  cnv.cor.files <- list.files(paste0(input.yaml$output.directory,"/results/individual.edm.calls/"),pattern = ".edm.cor.txt", full.names=T)
+  cnv.cor.files <- list.files(paste0(input.yaml$output.directory,"/results/individual.edm.calls/"),pattern = ".edm.stat.txt", full.names=T)
   cnv.cor.data <- do.call( rbind,lapply(1:length(cnv.cor.files), function(file) read.table(cnv.cor.files[file],header=T,stringsAsFactors=F)))
+  cnv.cor.data %>% filter(test == "correlation") -> cnv.cor.data
+  cnv.cor.data$sample_name <- gsub(".edm.stat.txt","",list.files(paste0(input.yaml$output.directory,"/results/individual.edm.calls/"),pattern = ".edm.stat.txt"))
   write.table(cnv.cor.data,paste0(input.yaml$output.directory,"/results/cohort.edm.correlation.txt"), row.names = F,quote=F)
-  p <- ggplot(cnv.cor.data,aes(x=sample_name, y = cor)) + 
+  p <- ggplot(cnv.cor.data,aes(x=sample_name, y = as.numeric(value))) + 
     geom_point(size=2,alpha=0.5) + 
     theme_classic() + 
     ylim(values=c(0,1)) + 
