@@ -76,12 +76,13 @@ call.variants <- function(columnIndex,input){
     message(paste0("\n *********** Sample ", sample_name, 
                    " failed for Autosome variant calling. ************* \n"))
   }
-  references <- data.frame(matrix(nrow =3,ncol=2))
-  names(references) = c("test","value")
+  references <- data.frame(matrix(nrow =3,ncol=3))
+  names(references) = c("test","value","ID")
   references$test[1] <- "autosomes_reference"
   references$test[2] <- "chrx_reference"
   references$test[3] <- "correlation"
   references$value[1] <- paste(reference_list$reference.choice,collapse=";")
+  references$ID <- sample_name
   
   if (sample_name %in% men) {
     if (input.yaml$precomputed.controls) {
@@ -214,10 +215,10 @@ call.variants <- function(columnIndex,input){
     calls.annotated <- cbind(calls.first, annotated[, 4:dim(annotated)[2]])
     
     if (input.yaml$reproducibility == T) {
-      calls.first$reproducibility <- 0
-      sample.del <- calls.first[calls.first$type %in% c("deletion"), 
+      calls.annotated$reproducibility <- 0
+      sample.del <- calls.annotated[calls.annotated$type %in% c("deletion"), 
                                 ]
-      sample.dup <- calls.first[calls.first$type %in% c("duplication"), 
+      sample.dup <- calls.annotated[calls.annotated$type %in% c("duplication"), 
                                 ]
       sample.del.gr <- GenomicRanges::GRanges(sample.del$id)
       sample.dup.gr <- GenomicRanges::GRanges(sample.dup$id)
@@ -377,7 +378,7 @@ call.variants <- function(columnIndex,input){
                               "/results/individual.ed.objects/", sample_name, ".ed.object.rds"))
     references$value[3] <- cor(all_exons$auto_calls@test, 
                                all_exons$auto_calls@reference)
-    references$ID <- sample_name
+    
     write.table(references, paste0(input.yaml$output.directory, 
                                  "/results/individual.edm.calls/", sample_name, ".edm.stat.txt"), 
                 row.names = F, sep = "\t")
@@ -391,10 +392,10 @@ call.variants <- function(columnIndex,input){
       calls.annotated <- cbind(calls.first, annotated[, 4:dim(annotated)[2]])
       
       if (input.yaml$reproducibility == T) {
-        calls.first$reproducibility <- 0
-        sample.del <- calls.first[calls.first$type %in% 
+        calls.annotated$reproducibility <- 0
+        sample.del <- calls.annotated[calls.annotated$type %in% 
                                     c("deletion"), ]
-        sample.dup <- calls.first[calls.first$type %in% 
+        sample.dup <- calls.annotated[calls.annotated$type %in% 
                                     c("duplication"), ]
         sample.del.gr <- GenomicRanges::GRanges(sample.del$id)
         sample.dup.gr <- GenomicRanges::GRanges(sample.dup$id)
@@ -494,7 +495,7 @@ call.variants <- function(columnIndex,input){
                                 ".ed.object.rds"))
       references$value[3] <- cor(all_exons$auto_calls@test, 
                                  all_exons$auto_calls@reference)
-      references$ID <- sample_name
+      
       write.table(references, paste0(input.yaml$output.directory, 
                                    "/results/individual.edm.calls/", sample_name, 
                                    ".edm.stat.txt"), row.names = F, sep = "\t")
