@@ -344,7 +344,7 @@ call.variants <- function(columnIndex,input){
         }
         
         all_exons_auto@CNV.calls$sample <- sample_name
-        if (dim(all_exons_auto@CNV.calls)[1] > 0) {
+        if (dim(all_exons_x@CNV.calls)[1] > 0) {
           all_exons_x@CNV.calls$sample <- sample_name
           my.calls.final <- rbind(all_exons_auto@CNV.calls, 
                                   all_exons_x@CNV.calls)
@@ -377,6 +377,7 @@ call.variants <- function(columnIndex,input){
                               "/results/individual.ed.objects/", sample_name, ".ed.object.rds"))
     references$value[3] <- cor(all_exons$auto_calls@test, 
                                all_exons$auto_calls@reference)
+    references$ID <- sample_name
     write.table(references, paste0(input.yaml$output.directory, 
                                  "/results/individual.edm.calls/", sample_name, ".edm.stat.txt"), 
                 row.names = F, sep = "\t")
@@ -493,6 +494,7 @@ call.variants <- function(columnIndex,input){
                                 ".ed.object.rds"))
       references$value[3] <- cor(all_exons$auto_calls@test, 
                                  all_exons$auto_calls@reference)
+      references$ID <- sample_name
       write.table(references, paste0(input.yaml$output.directory, 
                                    "/results/individual.edm.calls/", sample_name, 
                                    ".edm.stat.txt"), row.names = F, sep = "\t")
