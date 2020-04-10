@@ -204,7 +204,7 @@ wrapper.script <- function(input){
   clustermq::Q(plot.sample.max.correlation,pkgs=list("EDM"),input = input,n_jobs=1, max_calls_worker = 1,template=list(job_name="plotting_correlation",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input))
 
   system(paste0("mv plotting_correlation* ",input.yaml$output.directory,"/logs/."))
-  system(paste0("rm ",input.yaml$output.directory,"/results/individual.edm.calls/*.edm.cor.txt"))
+  system(paste0("rm ",input.yaml$output.directory,"/results/individual.edm.calls/*.edm.stat.txt"))
   
   ## summary data
   cohort.summary <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,".edm.summary.cohort.txt"),header=T,stringsAsFactors=F)
