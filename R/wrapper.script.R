@@ -111,23 +111,79 @@ wrapper.script <- function(input){
 
   
   EDM::check.exons.def(input=input)
+
+  if( is.null(input.yaml[["precomputed.coverage"]]) | input.yaml[["precomputed.coverage"]] ==F){
+    ## get Counts step
+    #  source("clustermq_getCounts.R")
+    nSamples = NROW(manifest)
+    message(' Count step...   \n')
+    clustermq::Q(get.bam.counts.mosdepth,pkgs="EDM",task_id=1:nSamples,input = input,n_jobs=nSamples, max_calls_worker = 1, template=list(job_name="compute_coverage", env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")),export = list(input = input),timeout = 72000)
+    
+    ## move log files
+    system(paste0("mv compute_coverage* ",input.yaml$output.directory,"/logs/."))
+    
+    ## gather counts
+    message(' Gathering Counts...   \n')
+    clustermq::Q(gather.mosdepth.coverage,pkgs="EDM",task_id=1,input = input,n_jobs=1, max_calls_worker = 1,template=list(job_name="gather_coverage",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input))
+    
+    #  source("gather_counts.R") 
+    ## move log files
+    system(paste0("mv gather_coverage* ",input.yaml$output.directory,"/logs/."))
+  } else {
+    
+    if(is.null(input.yaml[["precomputed.coverage.autosomes"]]) | input.yaml[["precomputed.coverage.autosomes"]] ==F ){
+      message('########### Cannot proceed without a file name. ###########\n')
+      break;
+    } else {
+      if(file.exists(input.yaml$precomputed.coverage.autosomes)){
+        precomputed_auto <- readRDS(input.yaml$precomputed.coverage.autosomes)
+        if(length(colnames(precomputed_auto[["countmat"]]) %in% manifest$sampleID) != nrow(manifest)){
+          message(' Not all samples from Manifest are present in precomputed.coverage.autosomes')
+          message(paste0('These samples are missing: \n',manifest$sampleID[!manifest$sampleID %in% colnames(precomputed_auto[["countmat"]]) ]))
+        } else {
+          saveRDS(precomputed_auto, file = paste0(input.yaml$output.directory, 
+                                                "/results/", input.yaml$cohort.name, ".exomedepth.cohort.auto.rds"))
+        }
+      }
+    }
+    
+    if(is.null(input.yaml[["precomputed.coverage.men"]]) | input.yaml[["precomputed.coverage.men"]] ==F ){
+      message('########### Cannot proceed without a file name. ###########\n')
+      break;
+    } else {
+      if(file.exists(input.yaml$precomputed.coverage.men)) {
+        precomputed_men <- readRDS(input.yaml$precomputed.coverage.men)
+        if(length(colnames(precomputed_men[["countmat"]]) %in% manifest$sampleID) != nrow( manifest[manifest$sex == "M",]) ) {
+          message(' Not all samples from Manifest are present in precomputed.coverage.autosomes')
+          message(paste0('These samples are missing: \n',manifest[manifest$sex == "M",]$sampleID[! manifest[manifest$sex == "M",]$sampleID %in% colnames(precomputed_men[["countmat"]]) ]))
+        } else {
+          saveRDS(precomputed_men, file = paste0(input.yaml$output.directory, 
+                                                  "/results/", input.yaml$cohort.name, ".exomedepth.cohort.men.rds"))
+        }
+      }
+    }
+    
+    if(is.null(input.yaml[["precomputed.coverage.women"]]) | input.yaml[["precomputed.coverage.autosomes"]] ==F ){
+      message('########### Cannot proceed without a file name. ###########\n')
+      break;
+    } else {
+      if(file.exists(input.yaml$precomputed.coverage.women)) {
+        precomputed_women <- readRDS(input.yaml$precomputed.coverage.women)
+        if(length(colnames(precomputed_women[["countmat"]]) %in% manifest$sampleID) != nrow( manifest[manifest$sex == "F",]) ) {
+          message(' Not all samples from Manifest are present in precomputed.coverage.autosomes')
+          message(paste0('These samples are missing: \n',manifest[manifest$sex == "F",]$sampleID[! manifest[manifest$sex == "F",]$sampleID %in% colnames(precomputed_women[["countmat"]]) ]))
+        } else {
+          saveRDS(precomputed_women, file = paste0(input.yaml$output.directory, 
+                                                 "/results/", input.yaml$cohort.name, ".exomedepth.cohort.women.rds"))
+        }
+      }
+    }
+    
+    write.table(manifest, paste0(input.yaml$output.directory, 
+                                 "/results/", input.yaml$cohort.name, "_manifest.txt"), 
+                row.names = F, quote = F, sep = "\t")
+  }
   
-  ## get Counts step
-  #  source("clustermq_getCounts.R")
-  nSamples = NROW(manifest)
-  message(' Count step...   \n')
-  clustermq::Q(get.bam.counts.mosdepth,pkgs="EDM",task_id=1:nSamples,input = input,n_jobs=nSamples, max_calls_worker = 1, template=list(job_name="compute_coverage", env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")),export = list(input = input),timeout = 72000)
-  
-  ## move log files
-  system(paste0("mv compute_coverage* ",input.yaml$output.directory,"/logs/."))
-  
-  ## gather counts
-  message(' Gathering Counts...   \n')
-  clustermq::Q(gather.mosdepth.coverage,pkgs="EDM",task_id=1,input = input,n_jobs=1, max_calls_worker = 1,template=list(job_name="gather_coverage",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input))
-  
-  #  source("gather_counts.R") 
-  ## move log files
-  system(paste0("mv gather_coverage* ",input.yaml$output.directory,"/logs/."))
   
   ## call variants
   message('Calling variants...   \n')
