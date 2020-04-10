@@ -1,17 +1,17 @@
 #required
-cohort.name: egrp_genedx
+cohort.name: Test
 
 ## required
-manifest: /mnt/isilon/helbig_lab/inbox/cnv_genedx_manifest.txt
+manifest: manifest.txt
 
 ## required
-output.directory: /mnt/isilon/helbig_lab/inbox/genedx_cnv
+output.directory: cnv_results
 
 ## required
 transition.probability: 1e-4
 
 ## required
-bed.file: # bedfile path or leave blank
+bed.file: bed_file.bed # bedfile path or leave blank
 
 ## required
 hpc.scheduler: sge
@@ -20,7 +20,7 @@ hpc.scheduler: sge
 env.name: edm_env
 
 ## fasta
-fasta: /mnt/isilon/helbig_lab/ref_files/hg19.fa
+fasta: hg19.fa
 
 ##optional 
 clustermq.template: ## user defined template - if provided certain options may change.
@@ -33,6 +33,13 @@ precomputed.controls: no ## if yes then autosomes and chrX data are required.
 precomputed.controls.autosomes:
 precomputed.controls.men:
 precomputed.controls.women:
+#
+reproducibility: no
+iterations: 0
+ped: ped.ped # please provide in ped format with no header and affected column
 
-reproducibility: yes
-iterations: 1000
+# only required to run call variants 
+precomputed.coverage: yes
+precomputed.coverage.autosomes: Test.exomedepth.cohort.auto.rds
+precomputed.coverage.men: Test.exomedepth.cohort.men.rds
+precomputed.coverage.women: Test.exomedepth.cohort.women.rds
