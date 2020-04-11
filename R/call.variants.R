@@ -211,6 +211,7 @@ call.variants <- function(columnIndex,input){
     all_exons_x@CNV.calls$sample <- sample_name
     all_exons <- list(auto_calls = all_exons_auto, x_calls = all_exons_x)
     calls.first <- rbind(all_exons_auto@CNV.calls, all_exons_x@CNV.calls)
+    
     annotated <- EDM::variant.annotations(calls.first)
     calls.annotated <- cbind(calls.first, annotated[, 4:dim(annotated)[2]])
     
@@ -222,14 +223,24 @@ call.variants <- function(columnIndex,input){
                                 ]
       sample.del.gr <- GenomicRanges::GRanges(sample.del$id)
       sample.dup.gr <- GenomicRanges::GRanges(sample.dup$id)
+      
       if (is.null(input.yaml$iterations) == F) {
         iterations = as.numeric(input.yaml$iterations)
       } else {
         iterations <- 1000
       }
+      if (is.null(input.yaml$random.controls) == F) {
+        n.random.controls = as.numeric(input.yaml$random.controls)
+        if(n.random.controls > dim(cohort.object.x[["countmat"]])[2]){
+          message(paste0('********* Random controls specified is higher than expected *********\n'))
+          n.random.controls <- min(100,dim(cohort.object.x[["countmat"]])[2] - 1)
+          warning(paste0('Random controls chosen for this Cohort is:',))
+        }
+      } else {
+        n.random.controls <- min(100,dim(cohort.object.x[["countmat"]])[2] - 1)
+      }
       
       for (iter in 1:iterations) {
-        n.random.controls <- 100
         if (input.yaml$precomputed.controls) {
           rand.samples <- sort(sample(c(1:nControls), 
                                       n.random.controls))
@@ -406,8 +417,19 @@ call.variants <- function(columnIndex,input){
           iterations <- 1000
         }
         
+        if (is.null(input.yaml$random.controls) == F) {
+          n.random.controls = as.numeric(input.yaml$random.controls)
+          if(n.random.controls > dim(cohort.object.x[["countmat"]])[2]){
+            message(paste0('********* Random controls specified is higher than expected *********\n'))
+            n.random.controls <- min(100,dim(cohort.object.x[["countmat"]])[2] - 1)
+            warning(paste0('Random controls chosen for this Cohort is:',))
+          }
+        } else {
+          n.random.controls <- min(100,dim(cohort.object.x[["countmat"]])[2] - 1)
+        }
+        
         for (iter in 1:iterations) {
-          n.random.controls <- 100
+          
           if (input.yaml$precomputed.controls) {
             rand.samples <- sort(sample(c(1:nControls), 
                                         n.random.controls))
