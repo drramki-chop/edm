@@ -38,7 +38,7 @@ get.positional.annotation <- function(gr){
 all_anno = readRDS(paste0(find.package("EDM"),"/data/pli_omim_rvis.rds"))
 names(all_anno) = c("genes","rvis_percentile","Mim.Number","Phenotypes","mis_z","pLI" )
 
-gnomad_sv <- fread(paste0(find.package("EDM"),"/data/gnomad_v2.1_sv.sites.bed.gz"))
+# gnomad_sv <- fread(paste0(find.package("EDM"),"/data/gnomad_v2.1_sv.sites.bed.gz"))
 
 
 exonCounts = readRDS(paste0(find.package("EDM"),"/data/exonCounts_by_gene.rds"))
