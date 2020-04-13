@@ -21,7 +21,7 @@ get.positional.annotation <- function(gr){
   
   all.hits <- exons.hg19.forAnn[subjectHits(findOverlaps(gr,exons.hg19.forAnn.gr)),c("gene","exonPosition","exonNumber","strand")]
   names(all.hits)[2] <- "BP1.exonPosition"
-  names(all.hits)[2] <- "BP2.exonPosition"
+  names(all.hits)[3] <- "BP2.exonPosition"
   
   genes <- merge(start.hits,end.hits,all.x=T,all.y=T)
   genes <- merge(genes,all.hits,all.x=T,all.y=T)
