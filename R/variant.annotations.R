@@ -19,12 +19,17 @@ get.positional.annotation <- function(gr){
   names(start.hits)[3] <- "BP1.exonNumber"
   names(end.hits)[3] <- "BP2.exonNumber"
   
+  all.hits <- exons.hg19.forAnn[subjectHits(findOverlaps(gr,exons.hg19.forAnn.gr)),c("gene","exonPosition","exonNumber","strand")]
+  names(all.hits)[2] <- "BP1.exonPosition"
+  names(all.hits)[2] <- "BP2.exonPosition"
+  
   genes <- merge(start.hits,end.hits,all.x=T,all.y=T)
+  genes <- merge(genes,all.hits,all.x=T,all.y=T)
   # genes <- merge(genes,genes.strand)
   genes <- merge(genes,exonCounts)
   # genes$positionalInfo <- apply(genes,1,get.positional.info)
   
-  gene_return = paste0(genes$gene,collapse = "|")
+  gene_return = paste0(unique(genes$gene),collapse = "|")
   # gene_position = paste0(genes$positionalInfo, collapse = "|")
   # return(paste0(gene_return,";",gene_position))
   return(gene_return)
@@ -33,7 +38,7 @@ get.positional.annotation <- function(gr){
 all_anno = readRDS(paste0(find.package("EDM"),"/data/pli_omim_rvis.rds"))
 names(all_anno) = c("genes","rvis_percentile","Mim.Number","Phenotypes","mis_z","pLI" )
 
-#gnomad_sv <- fread(paste0(find.package("EDM"),"/data/gnomad_v2.1_sv.sites.bed.gz"))
+gnomad_sv <- fread(paste0(find.package("EDM"),"/data/gnomad_v2.1_sv.sites.bed.gz"))
 
 
 exonCounts = readRDS(paste0(find.package("EDM"),"/data/exonCounts_by_gene.rds"))
@@ -83,5 +88,7 @@ queryDF %>% left_join(all_anno, by = "genes") -> queryDF
 return(queryDF)                      
 
 }
+
+
 
 
