@@ -5,9 +5,10 @@
 #' @importFrom clustermq Q
 wrapper.script <- function(input){ 
   ## read yaml file  
-  input.yaml <- yaml::read_yaml(input)
+  input.yaml <- check.yaml(input)
   
   ## create directories
+
   system(paste0("mkdir -p ",input.yaml$output.directory,"/coverage"))
   system(paste0("mkdir -p ",input.yaml$output.directory,"/results"))
   system(paste0("mkdir -p ",input.yaml$output.directory,"/logs"))
@@ -20,6 +21,7 @@ wrapper.script <- function(input){
   }else if(!is.null(input.yaml[["manifest"]]) & file.exists(input.yaml$manifest)){
     message('Reading the manifest...')
     manifest <- read.table(input.yaml$manifest, header = T, sep ="\t", stringsAsFactors = F)
+    manifest$sex <- gsub(F,"F",manifest$sex)
     names(manifest) <- c("bam","sampleID","sex")
     
     nSamples <- NROW(manifest)
@@ -57,7 +59,7 @@ wrapper.script <- function(input){
   manifest$index[which(file.exists(paste0(gsub(pattern = "bam","bai",manifest$bam))))] <- paste0(gsub(pattern = "bam","bai",manifest$bam[which(file.exists(paste0(gsub(pattern = "bam","bai",manifest$bam))))]))
   manifest$index[which(file.exists(paste0(as.character(manifest$bam),".crai")))] <- paste0(as.character(manifest$bam[which(file.exists(paste0(as.character(manifest$bam),".crai")))]),".crai")
   manifest$index[which(file.exists(paste0(gsub(pattern = "cram","crai",manifest$bam))))] <- paste0(gsub(pattern = "cram","crai",manifest$bam[which(file.exists(paste0(gsub(pattern = "cram","crai",manifest$bam))))]))
-
+  
   message(paste0('Samples with missing index files are written to results/missing.index.samples.txt \n sample_names:')) 
   message(paste0(manifest$sampleID[is.na(manifest$index)],'\n'));
   write.table( paste0('Index file not found for ',manifest[is.na(manifest$index),]),paste0(input.yaml$output.directory,"/results/missing.index.samples.txt"),row.names=F,quote=F, sep ="\t") 
@@ -72,19 +74,29 @@ wrapper.script <- function(input){
   #  } else{
   #    message(paste0('Samples with missing index files are written to temp/missing.index.samples.txt\n'));
   #    write.table( paste0('Index file not found for ',manifest$bam[i]),paste0(input.yaml$output.directory,"/temp/missing.index.samples.txt"),row.names=F,quote=F)
-      ## Edit manifest based on index
+  ## Edit manifest based on index
   #    manifest <- manifest[
   #  }
   #}
- 
- 
+  
+  
   ## edit this based on cluster template
   ## clustermq template
+  if(is.null(input.yaml[["env.name"]])){
+    message('########### Cannot proceed without a environment name. ###########\n')
+    break;
+  }
+  
+  if(is.null(input.yaml[["memory"]])){
+    message('########### Cannot proceed without memory value. ###########\n')
+    break;
+  }
+  
   if(is.null(input.yaml[["hpc.scheduler"]])){
     message('Cannot proceed without a Scheduler type\n')
     break;
-  }else{
-    if(is.null(input.yaml[["clustermq.template"]])){ 
+  } else {
+    if(is.null(input.yaml[["clustermq.template"]]) == T | is.na(input.yaml[["clustermq.template"]]) ==T  ){ 
       options(
         clustermq.scheduler = paste0(input.yaml$hpc.scheduler),
         clustermq.template = paste0(find.package("EDM"),"/template/",input.yaml$hpc.scheduler,"_template"),
@@ -99,20 +111,11 @@ wrapper.script <- function(input){
     }
   }
   
- if(is.null(input.yaml[["env.name"]])){
-    message('########### Cannot proceed without a environment name. ###########\n')
-    break;
-  }
-
-  if(is.null(input.yaml[["memory"]])){
-    message('########### Cannot proceed without memory value. ###########\n')
-    break;
-  }
-
   
-  EDM::check.exons.def(input=input)
-
-  if( is.null(input.yaml[["precomputed.coverage"]]) | input.yaml[["precomputed.coverage"]] ==F){
+  input <- paste0(input.yaml$output.directory,"/results/input.yaml")
+  EDM::check.exons.def(input= input)
+  
+  if( is.null(input.yaml[["precomputed.coverage"]]) | is.na(input.yaml[["precomputed.coverage"]]) ==T ){
     ## get Counts step
     #  source("clustermq_getCounts.R")
     nSamples = NROW(manifest)
@@ -131,7 +134,7 @@ wrapper.script <- function(input){
     system(paste0("mv gather_coverage* ",input.yaml$output.directory,"/logs/."))
   } else {
     
-    if(is.null(input.yaml[["precomputed.coverage.autosomes"]]) | input.yaml[["precomputed.coverage.autosomes"]] ==F ){
+    if(is.null(input.yaml[["precomputed.coverage.autosomes"]]) | input.yaml[["precomputed.coverage.autosomes"]] ==F | is.na(input.yaml[["precomputed.coverage.autosomes"]])){
       message('########### Cannot proceed without a file name. ###########\n')
       break;
     } else {
@@ -142,12 +145,12 @@ wrapper.script <- function(input){
           message(paste0('These samples are missing: \n',manifest$sampleID[!manifest$sampleID %in% colnames(precomputed_auto[["countmat"]]) ]))
         } else {
           saveRDS(precomputed_auto, file = paste0(input.yaml$output.directory, 
-                                                "/results/", input.yaml$cohort.name, ".exomedepth.cohort.auto.rds"))
+                                                  "/results/", input.yaml$cohort.name, ".exomedepth.cohort.auto.rds"))
         }
       }
     }
     
-    if(is.null(input.yaml[["precomputed.coverage.men"]]) | input.yaml[["precomputed.coverage.men"]] ==F ){
+    if(is.null(input.yaml[["precomputed.coverage.men"]]) | input.yaml[["precomputed.coverage.men"]] ==F |is.na(input.yaml[["precomputed.coverage.men"]]) == T){
       message('########### Cannot proceed without a file name. ###########\n')
       break;
     } else {
@@ -158,12 +161,12 @@ wrapper.script <- function(input){
           message(paste0('These samples are missing: \n',manifest[manifest$sex == "M",]$sampleID[! manifest[manifest$sex == "M",]$sampleID %in% colnames(precomputed_men[["countmat"]]) ]))
         } else {
           saveRDS(precomputed_men, file = paste0(input.yaml$output.directory, 
-                                                  "/results/", input.yaml$cohort.name, ".exomedepth.cohort.men.rds"))
+                                                 "/results/", input.yaml$cohort.name, ".exomedepth.cohort.men.rds"))
         }
       }
     }
     
-    if(is.null(input.yaml[["precomputed.coverage.women"]]) | input.yaml[["precomputed.coverage.autosomes"]] ==F ){
+    if(is.null(input.yaml[["precomputed.coverage.women"]]) | input.yaml[["precomputed.coverage.autosomes"]] ==F |is.na(input.yaml[["precomputed.coverage.women"]]) ==T ){
       message('########### Cannot proceed without a file name. ###########\n')
       break;
     } else {
@@ -174,7 +177,7 @@ wrapper.script <- function(input){
           message(paste0('These samples are missing: \n',manifest[manifest$sex == "F",]$sampleID[! manifest[manifest$sex == "F",]$sampleID %in% colnames(precomputed_women[["countmat"]]) ]))
         } else {
           saveRDS(precomputed_women, file = paste0(input.yaml$output.directory, 
-                                                 "/results/", input.yaml$cohort.name, ".exomedepth.cohort.women.rds"))
+                                                   "/results/", input.yaml$cohort.name, ".exomedepth.cohort.women.rds"))
         }
       }
     }
@@ -188,8 +191,8 @@ wrapper.script <- function(input){
   ## call variants
   message('Calling variants...   \n')
   manifest <-  read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),header=T, stringsAsFactors=F,sep ="\t")
-   nSamples = NROW(manifest)
-   call.variants <- suppressWarnings(call.variants)
+  nSamples = NROW(manifest)
+  call.variants <- suppressWarnings(call.variants)
   clustermq::Q(call.variants,pkgs=list("EDM","ExomeDepth"),columnIndex=1:nSamples,n_jobs=nSamples,input=input, max_calls_worker = 1,template=list(job_name="call_variants",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input),timeout = 1440000)
   
   ## move log files
@@ -199,16 +202,16 @@ wrapper.script <- function(input){
   message(' Gathering Calls...   \n')
   clustermq::Q(gather.variant.calls,pkgs=list("EDM"),task_id=1,input = input,n_jobs=1, max_calls_worker = 1,template=list(job_name="gather_calls",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input))
   system(paste0("mv gather_calls* ",input.yaml$output.directory,"/logs/."))
-
+  
   message(' Plotting correlation...   \n')
   clustermq::Q(plot.sample.max.correlation,pkgs=list("EDM"),input = input,n_jobs=1, max_calls_worker = 1,template=list(job_name="plotting_correlation",env.name = input.yaml$env.name ,memory = (input.yaml$memory*1024), mem = paste0(input.yaml$memory,"G")), export = list(input = input))
-
+  
   system(paste0("mv plotting_correlation* ",input.yaml$output.directory,"/logs/."))
-#  system(paste0("rm ",input.yaml$output.directory,"/results/individual.edm.calls/*.edm.stat.txt"))
+  #  system(paste0("rm ",input.yaml$output.directory,"/results/individual.edm.calls/*.edm.stat.txt"))
   
   ## summary data
   cohort.summary <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,".edm.summary.cohort.txt"),header=T,stringsAsFactors=F)
-   
+  
   ## summary
   message('Summary of number of calls in cohort \n')
   message('Mean of cohort: ',round(mean(cohort.summary$Freq)),'\n')

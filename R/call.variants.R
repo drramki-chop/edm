@@ -9,6 +9,7 @@ call.variants <- function(columnIndex,input){
                                 "/results/", input.yaml$cohort.name, "_manifest.txt"), 
                          header = T, sep = "\t", stringsAsFactors = F)
   names(manifest) <- c("bam", "sampleID", "sex")
+  manifest$sex <- gsub(F,"F",manifest$sex)
   sample_name <- manifest$sampleID[columnIndex]
   exons <- read.table(paste0(input.yaml$output.directory, "/results/bed_file.bed"), 
                       stringsAsFactors = F)
@@ -17,7 +18,7 @@ call.variants <- function(columnIndex,input){
                              "1"]
   women <- manifest$sampleID[manifest$sex == "F" | manifest$sex == 
                                "2"]
-  if (input.yaml$precomputed.controls) {
+  if (is.null(input.yaml$precomputed.controls) == F & is.na(input.yaml[["precomputed.controls"]]) == F ) {
     cohort.object.auto <- readRDS(input.yaml[["precomputed.controls.autosomes"]])
     nControls <- dim(cohort.object.auto[["countmat"]])[2]
     batch <- readRDS(paste0(input.yaml$output.directory, 
@@ -40,7 +41,7 @@ call.variants <- function(columnIndex,input){
   } else {
     cohort.object.auto <- readRDS(paste0(input.yaml$output.directory, 
                                          "/results/", input.yaml$cohort.name, ".exomedepth.cohort.auto.rds"))
-    if (is.null(input.yaml$ped) == F) {
+    if (is.null(input.yaml$ped) == F & is.na(input.yaml$ped) == F ) {
       ped <- read.table(paste0(input.yaml$ped), stringsAsFactors = F, 
                         header = F, fill = T)
       columnIndex_fam <- which(colnames(cohort.object.auto[["countmat"]]) %in% 
@@ -85,7 +86,7 @@ call.variants <- function(columnIndex,input){
   references$ID <- sample_name
   
   if (sample_name %in% men) {
-    if (input.yaml$precomputed.controls) {
+    if (is.null(input.yaml$precomputed.controls) == F & is.na(input.yaml[["precomputed.controls"]]) == F ) {
       cohort.object.x <- readRDS(input.yaml[["precomputed.controls.men"]])
       nControls <- dim(cohort.object.x[["countmat"]])[2]
       batch <- readRDS(paste0(input.yaml$output.directory, 
@@ -108,7 +109,7 @@ call.variants <- function(columnIndex,input){
     } else {
       cohort.object.x <- readRDS(paste0(input.yaml$output.directory, 
                                         "/results/", input.yaml$cohort.name, ".exomedepth.cohort.men.rds"))
-      if (is.null(input.yaml$ped) == F) {
+      if (is.null(input.yaml$ped) == F & is.na(input.yaml$ped) == F) {
         ped <- read.table(paste0(input.yaml$ped), stringsAsFactors = F, 
                           header = F, fill = T)
         columnIndex_fam <- which(colnames(cohort.object.x[["countmat"]]) %in% 
@@ -144,7 +145,7 @@ call.variants <- function(columnIndex,input){
                      " failed for chrX variant calling. ************* \n"))
     }
   } else {
-    if (input.yaml$precomputed.controls) {
+    if (is.null(input.yaml$precomputed.controls) == F & is.na(input.yaml[["precomputed.controls"]]) == F ) {
       cohort.object.x <- readRDS(input.yaml[["precomputed.controls.women"]])
       nControls <- dim(cohort.object.x[["countmat"]])[2]
       batch <- readRDS(paste0(input.yaml$output.directory, 
@@ -167,7 +168,7 @@ call.variants <- function(columnIndex,input){
     } else {
       cohort.object.x <- readRDS(paste0(input.yaml$output.directory, 
                                         "/results/", input.yaml$cohort.name, ".exomedepth.cohort.women.rds"))
-      if (is.null(input.yaml$ped) == F) {
+      if (is.null(input.yaml$ped) == F & is.na(input.yaml$ped) == F ) {
         ped <- read.table(paste0(input.yaml$ped), stringsAsFactors = F, 
                           header = F, fill = T)
         columnIndex_fam <- which(colnames(cohort.object.x[["countmat"]]) %in% 
@@ -215,7 +216,7 @@ call.variants <- function(columnIndex,input){
     annotated <- EDM::variant.annotations(calls.first)
     calls.annotated <- cbind(calls.first, annotated[, 4:dim(annotated)[2]])
     
-    if (input.yaml$reproducibility == T) {
+    if (is.null(input.yaml$reproducibility) == F & is.na(input.yaml$reproducibility) == F) {
       calls.annotated$reproducibility <- 0
       sample.del <- calls.annotated[calls.annotated$type %in% c("deletion"), 
                                 ]
@@ -224,12 +225,12 @@ call.variants <- function(columnIndex,input){
       sample.del.gr <- GenomicRanges::GRanges(sample.del$id)
       sample.dup.gr <- GenomicRanges::GRanges(sample.dup$id)
       
-      if (is.null(input.yaml$iterations) == F) {
+      if (is.null(input.yaml$iterations) == F & is.na(input.yaml$iterations) == F) {
         iterations = as.numeric(input.yaml$iterations)
       } else {
         iterations <- 1000
       }
-      if (is.null(input.yaml$random.controls) == F) {
+      if (is.null(input.yaml$random.controls) == F & is.na(input.yaml$random.controls) == F) {
         n.random.controls = as.numeric(input.yaml$random.controls)
         if(n.random.controls > dim(cohort.object.x[["countmat"]])[2]){
           message(paste0('********* Random controls specified is higher than expected *********\n'))
@@ -241,7 +242,7 @@ call.variants <- function(columnIndex,input){
       }
       
       for (iter in 1:iterations) {
-        if (input.yaml$precomputed.controls) {
+        if (is.null(input.yaml$precomputed.controls) == F & is.na(input.yaml[["precomputed.controls"]]) == F ) {
           rand.samples <- sort(sample(c(1:nControls), 
                                       n.random.controls))
           reference_list_auto <- EDM::select.reference.panel(test.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]], 
@@ -259,7 +260,7 @@ call.variants <- function(columnIndex,input){
           nControls <- dim(cohort.object.auto[["countmat"]])[2]
           rand.samples <- sort(sample(c(1:nControls), 
                                       n.random.controls))
-          if (is.null(input.yaml$ped) == F) {
+          if (is.null(input.yaml$ped) == F & is.na(input.yaml$ped) ==F ) {
             ped <- read.table(paste0(input.yaml$ped), 
                               stringsAsFactors = F, header = F, fill = T)
             columnIndex_fam <- which(colnames(cohort.object.auto[["countmat"]]) %in% 
@@ -402,7 +403,7 @@ call.variants <- function(columnIndex,input){
       annotated <- EDM::variant.annotations(calls.first)
       calls.annotated <- cbind(calls.first, annotated[, 4:dim(annotated)[2]])
       
-      if (input.yaml$reproducibility == T) {
+      if ( is.null(input.yaml$reproducibility) == F & is.na(input.yaml$reproducibility) == F  ) {
         calls.annotated$reproducibility <- 0
         sample.del <- calls.annotated[calls.annotated$type %in% 
                                     c("deletion"), ]
@@ -411,13 +412,13 @@ call.variants <- function(columnIndex,input){
         sample.del.gr <- GenomicRanges::GRanges(sample.del$id)
         sample.dup.gr <- GenomicRanges::GRanges(sample.dup$id)
         
-        if (is.null(input.yaml$iterations) == F) {
+        if (is.null(input.yaml$iterations) == F & is.na(input.yaml$iterations) == F) {
           iterations = as.numeric(input.yaml$iterations)
         } else {
           iterations <- 1000
         }
         
-        if (is.null(input.yaml$random.controls) == F) {
+        if (is.null(input.yaml$random.controls) == F & is.na(input.yaml$random.controls) == F) {
           n.random.controls = as.numeric(input.yaml$random.controls)
           if(n.random.controls > dim(cohort.object.x[["countmat"]])[2]){
             message(paste0('********* Random controls specified is higher than expected *********\n'))
@@ -430,7 +431,7 @@ call.variants <- function(columnIndex,input){
         
         for (iter in 1:iterations) {
           
-          if (input.yaml$precomputed.controls) {
+          if (is.null(input.yaml$precomputed.controls) == F & is.na(input.yaml$precomputed.controls) == F) {
             rand.samples <- sort(sample(c(1:nControls), 
                                         n.random.controls))
             reference_list_auto <- EDM::select.reference.panel(test.counts = cohort.object.auto[["countmat"]][cohort.object.auto[["selected.exons"]], 
@@ -441,7 +442,7 @@ call.variants <- function(columnIndex,input){
             nControls <- dim(cohort.object.auto[["countmat"]])[2]
             rand.samples <- sort(sample(c(1:nControls), 
                                         n.random.controls))
-            if (is.null(input.yaml$ped) == F) {
+            if (is.null(input.yaml$ped) == F & is.na(input.yaml$ped) == F) {
               ped <- read.table(paste0(input.yaml$ped), 
                                 stringsAsFactors = F, header = F, fill = T)
               columnIndex_fam <- which(colnames(cohort.object.auto[["countmat"]]) %in% 
