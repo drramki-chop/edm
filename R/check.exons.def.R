@@ -5,7 +5,7 @@ check.exons.def <- function(input){
   input.yaml <- yaml::read_yaml(input)
   
   ## bed-file
-    if(is.null(input.yaml[["bed.file"]]) | length(input.yaml[["bed.file"]])==0 ){
+    if(is.null(input.yaml[["bed.file"]]) | is.na(input.yaml[["bed.file"]])== T ){
       data(exons.hg19,package = "ExomeDepth")
       data(exons.hg19.X,package = "ExomeDepth")
       exons <- rbind(exons.hg19,exons.hg19.X)
