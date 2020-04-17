@@ -9,7 +9,7 @@ gather.mosdepth.coverage <- function(task_id,input){
  # manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$manifest), header = T, sep ="\t", stringsAsFactors = F)
   manifest <- read.table(paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,"_manifest.txt"),header=T, sep = "\t",stringsAsFactors=F)
   names(manifest) <- c("bam","sampleID","sex")
-  
+  manifest$sex <- gsub(F,"F",manifest$sex)
   # options(
   #   clustermq.scheduler = paste0(input.yaml$scheduler),
   #  clustermq.template = paste0(find.package("EDM"),"/template/",input.yaml$scheduler,"_template"),

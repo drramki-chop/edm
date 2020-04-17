@@ -3,7 +3,7 @@ Type: Package
 Title: Scalable workflow to identify copy Number variants from exome
         sequencing data
 Version: 0.0.1
-Date: 2019-11-01
+Date: 2020-03-26
 Depends: R (>= 3.5.0), clustermq, ExomeDepth, yaml, purrr, data.table,
         dplyr, magrittr, ggplot2, GenomicRanges
 Imports: clustermq, ExomeDepth, yaml, purrr, data.table, dplyr,
