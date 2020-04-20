@@ -36,7 +36,9 @@ option_list = list(
   make_option(c("--control-autosomes"), action="store",
 		type='character', help = "Pre-computed control cohort (autosomes)"),
   make_option(c("--control-sex-chromosome"), action = "store",
-  		type='character', help = "Pre-computed control cohort (sex chromosome)")
+  		type='character', help = "Pre-computed control cohort (sex chromosome)"),
+  make_option(c("--exclude-family"), action = "store", default = NULL,
+		type = 'character', help = "exclude familyID from controls")
 )
 
 opt = parse_args(OptionParser(option_list=option_list))

@@ -53,7 +53,7 @@ if(NCOL(new.cohort$countmat) != NROW(new.cohort$manifest)){
 countmat <- cbind(existing.cohort$countmat,new.cohort$countmat)
 merged.manifest <- rbind(existing.cohort$manifest, new.cohort$manifest)
 if(opt$`exclude-parents`){
-  merged.manifest <- merged.manifest[merged.manifest$sample %in% "parent",]
+  merged.manifest <- merged.manifest[merged.manifest$sample.type %in% c("parent","father","mother"),]
   countmat <- countmat[,colnames(countmat) %in% merged.manifest$sampleID]
 }
 
