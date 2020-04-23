@@ -31,6 +31,6 @@ dups.calls$dups.any.match <- GenomicRanges::countOverlaps(dups,dups)
 all_calls <- rbind(del.calls, dups.calls)
 
 
-write.table(all_calls,paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,".edm.cohort.calls.txt"),row.names=F,sep="\t",quote=F)
-write.table(summary.cohort,paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,".edm.summary.cohort.txt"),row.names=F,sep="\t",quote=F)
+write.table(all_calls,paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,".edm.cohort.calls.txt"),row.names=F,sep="\t",quote=T)
+write.table(summary.cohort,paste0(input.yaml$output.directory,"/results/",input.yaml$cohort.name,".edm.summary.cohort.txt"),row.names=F,sep="\t",quote=T)
 }
