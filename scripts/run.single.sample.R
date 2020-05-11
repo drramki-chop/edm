@@ -22,7 +22,7 @@
 
 
 suppressMessages(library(optparse))
-suppressMessages(library(EDM))
+#suppressMessages(library(EDM))
 
 options(stringsAsFactors=FALSE) # crucial for handling BAM filenames as strings
 
@@ -50,6 +50,24 @@ controls.sex.chromosome = opt$`control-sex-chromosome`
 
 cohort.object.auto <- readRDS(controls.autosomes)
 cohort.object.x <- readRDS(controls.sex.chromosome)
+
+auto.manifest <- cohort.object.auto$manifest
+chrX.manifest <- cohort.object.x$manifest
+
+if(!is.null(opt$`exclude-family`)){
+	exclude.family <- opt$`exclude-family`;
+    
+    	auto.exclude.family <- auto.manifest[auto.manifest$familyID %in% exclude.family, ]
+    	chrX.exclude.family <- chrX.manifest[chrX.manifest$familyID %in% exclude.family, ]
+
+	countmat <- cohort.object.auto[["countmat"]]
+	countmat <- countmat[,-which(colnames(countmat) %in% auto.exclude.family$sampleID)]
+    	cohort.object.auto[["countmat"]] <- countmat
+    
+	countmat <- cohort.object.x[["countmat"]]
+	countmat <- countmat[,-which(colnames(countmat) %in% chrX.exclude.family$sampleID)]
+    	cohort.object.x[["countmat"]] <- countmat	
+}
 
 nControls.autosomes <- dim(cohort.object.auto[["countmat"]])[2]
 nControls.sex.chromosome <- dim(cohort.object.x[["countmat"]])[2]
