@@ -18,7 +18,7 @@ option_list = list(
 
 opt = parse_args(OptionParser(option_list=option_list))
 
-expected.columns <- c("familyID","sampleID","paternalID","maternalID","sex","phenotype","mosdepth.coverage","batchID","sample")
+expected.columns <- c("familyID","sampleID","paternalID","maternalID","sex","phenotype","mosdepth.coverage","batchID","sample.type")
 
 manifest <- read.table(opt$manifest, header = T, sep = "\t", stringsAsFactors = F)
 output.directory <- as.character(opt$`output-folder`)
