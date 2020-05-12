@@ -22,7 +22,7 @@
 
 
 suppressMessages(library(optparse))
-#suppressMessages(library(EDM))
+suppressMessages(library(EDM))
 
 options(stringsAsFactors=FALSE) # crucial for handling BAM filenames as strings
 
@@ -37,8 +37,10 @@ option_list = list(
 		type='character', help = "Pre-computed control cohort (autosomes)"),
   make_option(c("--control-sex-chromosome"), action = "store",
   		type='character', help = "Pre-computed control cohort (sex chromosome)"),
-  make_option(c("--exclude-family"), action = "store", default = NULL,
-		type = 'character', help = "exclude familyID from controls")
+  make_option(c("--exclude-family-from-controls"), action = "store", default = NULL,
+		type = 'character', help = "exclude familyID from controls"),
+  make_option(c("--exclude-sample-from-controls"), action = "store", default = NULL,
+		type = 'character', help = "exclud sample from the control cohort")
 )
 
 opt = parse_args(OptionParser(option_list=option_list))
@@ -54,19 +56,54 @@ cohort.object.x <- readRDS(controls.sex.chromosome)
 auto.manifest <- cohort.object.auto$manifest
 chrX.manifest <- cohort.object.x$manifest
 
-if(!is.null(opt$`exclude-family`)){
+if(!is.null(opt$`exclude-family-from-controls`)){
 	exclude.family <- opt$`exclude-family`;
     
     	auto.exclude.family <- auto.manifest[auto.manifest$familyID %in% exclude.family, ]
     	chrX.exclude.family <- chrX.manifest[chrX.manifest$familyID %in% exclude.family, ]
 
+    if(NROW(auto.exclude.family) > 0){
+	message(paste0("Excluding familyID ",exclude.family," (",NROW(auto.exclude.family)," samples)"," from the autosome control cohort\n"))
 	countmat <- cohort.object.auto[["countmat"]]
 	countmat <- countmat[,-which(colnames(countmat) %in% auto.exclude.family$sampleID)]
     	cohort.object.auto[["countmat"]] <- countmat
-    
+    }else{
+	stop(paste0("FamilyID ",exclude.family," not found in controls (autosomes)."))
+    }
+
+    if(NROW(chrX.exclude.family) > 0){
+	message(paste0("Excluding familyID ",exclude.family," from the chrX control cohort\n"))
 	countmat <- cohort.object.x[["countmat"]]
 	countmat <- countmat[,-which(colnames(countmat) %in% chrX.exclude.family$sampleID)]
     	cohort.object.x[["countmat"]] <- countmat	
+    }else{
+	stop(paste0("FamilyID ",exclude.family," not found in controls (chrX)."))
+    }
+}
+
+if(!is.null(opt$`exclude-sample-from-controls`)){
+	exclude.sample <- opt$`exclude-sample`;
+    
+	auto.exclude.sample <- auto.manifest[auto.manifest$sampleID %in% exclude.sample, ]
+	chrX.exclude.sample <- chrX.manifest[chrX.manifest$sampleID %in% exclude.sample, ]
+
+    if(NROW(auto.exclude.sample) > 0){
+	message(paste0("Excluding sampleID ",exclude.sample," from the autosome control cohort\n"))
+	countmat <- cohort.object.auto[["countmat"]]
+	countmat <- countmat[,-which(colnames(countmat) %in% auto.exclude.sample$sampleID)]
+	cohort.object.auto[["countmat"]] <- countmat
+    }else{
+	stop(paste0("SampleID ",exclude.sample," not found in controls (autosomes)."))
+    }
+    
+    if(NROW(chrX.exclude.sample) > 0){
+	message(paste0("Excluding sampleID ",exclude.sample," from the chrX control cohort\n"))
+	countmat <- cohort.object.x[["countmat"]]
+	countmat <- countmat[,-which(colnames(countmat) %in% chrX.exclude.sample$sampleID)]
+        cohort.object.x[["countmat"]] <- countmat
+    }else{
+	stop(paste0("SampleID ",exclude.sample," not found in controls (chrX)."))
+    }
 }
 
 nControls.autosomes <- dim(cohort.object.auto[["countmat"]])[2]
