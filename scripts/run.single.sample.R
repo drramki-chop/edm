@@ -148,6 +148,17 @@ if(is.null(reference_list$reference.choice) == F){
         all_exons_auto@CNV.calls$sample <- opt$`sample-id`
         saveRDS(all_exons_auto,paste0(opt$`sample-id`,".auto.edObject.rds"));
         CNV.calls <- all_exons_auto@CNV.calls
+	
+	## Sample stats
+	sample.stats <- data.frame(matrix(nrow=1,ncol= 5))
+	names(sample.stats) <- c("sample","n.deletions","n.duplications","total.cnvs","model.phi")
+	sample.stats$sample[1] <- opt$`sample-id`;
+	sample.stats$n.deletions[1] <- NROW(CNV.calls[CNV.calls$type %in% "deletion",])
+	sample.stats$n.duplications[1] <- NROW(CNV.calls[CNV.calls$type %in% "duplication",])
+	sample.stats$total.cnvs[1] <- NROW(CNV.calls);
+	sample.stats$model.phi[1] <- unique(all_exons_auto@phi);
+	write.csv(sample.stats,paste0(opt$`sample-id`,".sample.stats.csv"),quote=F,row.names=F)
+
     } else {
 	message("Warning: Did not find any CNV in autosomes.")
 	flush.console();
