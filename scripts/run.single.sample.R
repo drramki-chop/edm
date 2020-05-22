@@ -68,7 +68,7 @@ if(!is.null(opt$`exclude-family-from-controls`)){
 	countmat <- countmat[,-which(colnames(countmat) %in% auto.exclude.family$sampleID)]
     	cohort.object.auto[["countmat"]] <- countmat
     }else{
-	stop(paste0("FamilyID ",exclude.family," not found in controls (autosomes)."))
+	warning(paste0("FamilyID ",exclude.family," not found in controls (autosomes)."))
     }
 
     if(NROW(chrX.exclude.family) > 0){
@@ -77,7 +77,7 @@ if(!is.null(opt$`exclude-family-from-controls`)){
 	countmat <- countmat[,-which(colnames(countmat) %in% chrX.exclude.family$sampleID)]
     	cohort.object.x[["countmat"]] <- countmat	
     }else{
-	stop(paste0("FamilyID ",exclude.family," not found in controls (chrX)."))
+	warning(paste0("FamilyID ",exclude.family," not found in controls (chrX)."))
     }
 }
 
@@ -93,7 +93,7 @@ if(!is.null(opt$`exclude-sample-from-controls`)){
 	countmat <- countmat[,-which(colnames(countmat) %in% auto.exclude.sample$sampleID)]
 	cohort.object.auto[["countmat"]] <- countmat
     }else{
-	stop(paste0("SampleID ",exclude.sample," not found in controls (autosomes)."))
+	warning(paste0("SampleID ",exclude.sample," not found in controls (autosomes)."))
     }
     
     if(NROW(chrX.exclude.sample) > 0){
@@ -102,7 +102,7 @@ if(!is.null(opt$`exclude-sample-from-controls`)){
 	countmat <- countmat[,-which(colnames(countmat) %in% chrX.exclude.sample$sampleID)]
         cohort.object.x[["countmat"]] <- countmat
     }else{
-	stop(paste0("SampleID ",exclude.sample," not found in controls (chrX)."))
+	warning(paste0("SampleID ",exclude.sample," not found in controls (chrX)."))
     }
 }
 
