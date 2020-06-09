@@ -74,7 +74,12 @@ for (iter in 1:iterations) {
 
 
   reference_set = rowSums(countmat[, reference_list$reference.choice])
-  
+  if(NROW(countmat) > 25000){
+	 subset.exons.for.speed = 10000;
+  }else{
+	subset.exons.for.speed = NROW(countmat)
+  }
+
   all_exons_auto = new('ExomeDepth', test=countmat[,sample.index],
                        reference=reference_set,
                        formula = 'cbind(test,reference) ~ 1')
