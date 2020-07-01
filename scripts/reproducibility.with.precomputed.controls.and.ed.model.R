@@ -86,20 +86,26 @@ for (iter in 1:iterations) {
   all_exons_auto = ExomeDepth::CallCNVs(x = all_exons_auto, transition.probability=1e-4,
                                         chromosome= cohort.object[["annotations"]]$chromosome, start=cohort.object[["annotations"]]$start,
                                         end=cohort.object[["annotations"]]$end, name=cohort.object[["annotations"]]$name)
-  all_exons_auto@CNV.calls$sample <- sample.name
+if(NROW(all_exons_auto@CNV.calls) > 0){
+    all_exons_auto@CNV.calls$sample <- sample.name
   
 
-  my.calls.final <- all_exons_auto@CNV.calls
+    my.calls.final <- all_exons_auto@CNV.calls
   
-  #write.table(my.calls.final,paste0(sample.name,".iter.",iter,".txt"), row.names=F,quote=F,sep="\t")
-  my.calls.final.del.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("deletion"),]$id)
-  my.calls.final.dup.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("duplication"),]$id)
-  sample.del$reproducibility <- sample.del$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.del.gr,my.calls.final.del.gr) > 0)
-  sample.dup$reproducibility <- sample.dup$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.dup.gr,my.calls.final.dup.gr) > 0)
+    #write.table(my.calls.final,paste0(sample.name,".iter.",iter,".txt"), row.names=F,quote=F,sep="\t")
+    my.calls.final.del.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("deletion"),]$id)
+    my.calls.final.dup.gr <- GenomicRanges::GRanges(my.calls.final[my.calls.final$type %in% c("duplication"),]$id)
+    sample.del$reproducibility <- sample.del$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.del.gr,my.calls.final.del.gr) > 0)
+    sample.dup$reproducibility <- sample.dup$reproducibility +  as.numeric(GenomicRanges::countOverlaps(sample.dup.gr,my.calls.final.dup.gr) > 0)
+  }
 }
 
 sample.cnv.calls <- rbind(sample.del,sample.dup)
-write.table(sample.cnv.calls,paste0(sample.name,".edm.reproducibility.calls.txt"),quote=F,row.names=F,sep="\t")
+if(length(unique(sample.cnv.calls$chromosome)) > 1){
+	write.table(sample.cnv.calls,paste0(sample.name,".edm.autosomes.reproducibility.calls.txt"),quote=F,row.names=F,sep="\t")
+}else if(as.character(unique(sample.cnv.calls$chromosome)) == "X"){
+	write.table(sample.cnv.calls,paste0(sample.name,".edm.chrX.reproducibility.calls.txt"),quote=F,row.names=F,sep="\t")
+}
 total_time = Sys.time() - start_time
 
 message(paste("Took ",total_time))
