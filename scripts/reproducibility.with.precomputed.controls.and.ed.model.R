@@ -75,14 +75,15 @@ for (iter in 1:iterations) {
 
   reference_set = rowSums(countmat[, reference_list$reference.choice])
   if(NROW(countmat) > 25000){
-	 subset.exons.for.speed = 10000;
+	   all_exons_auto = new('ExomeDepth', test=countmat[,sample.index],
+                       reference=reference_set,
+                       formula = 'cbind(test,reference) ~ 1', subset.for.speed =10000)
   }else{
-	subset.exons.for.speed = NROW(countmat)
+	  all_exons_auto = new('ExomeDepth', test=countmat[,sample.index],
+                       reference=reference_set,
+                       formula = 'cbind(test,reference) ~ 1')
   }
 
-  all_exons_auto = new('ExomeDepth', test=countmat[,sample.index],
-                       reference=reference_set,
-                       formula = 'cbind(test,reference) ~ 1', subset.for.speed = subset.exons.for.speed)
   all_exons_auto = ExomeDepth::CallCNVs(x = all_exons_auto, transition.probability=1e-4,
                                         chromosome= cohort.object[["annotations"]]$chromosome, start=cohort.object[["annotations"]]$start,
                                         end=cohort.object[["annotations"]]$end, name=cohort.object[["annotations"]]$name)
