@@ -72,7 +72,10 @@ for (iter in 1:iterations) {
       correlations = correlations[rand.samples, sample.index]
     )
 
-
+  if (is.null(reference_list)){
+	iterations = iterations+1;
+	next;
+  }
   reference_set = rowSums(countmat[, reference_list$reference.choice])
   if(NROW(countmat) > 25000){
 	   all_exons_auto = new('ExomeDepth', test=countmat[,sample.index],
